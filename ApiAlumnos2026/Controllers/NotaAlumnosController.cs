@@ -8,7 +8,7 @@ namespace ApiAlumnos2026.Controllers
     //TENER EN CUENTA PARA DESPUÉS PODER INICIAR EN SWAGGER
     [Route("api/[controller]")]
     [ApiController]
-    public class NotaAlumnosController : Controller
+    public class NotaAlumnosController : ControllerBase
     {
         private readonly ApiAlumnos2026DbContext _context;
 
@@ -18,9 +18,9 @@ namespace ApiAlumnos2026.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index()
+        public async Task<ActionResult<IEnumerable<NotaAlumno>>> GetNotaAlumnos()
         {
-            return View();
+            return await _context.NotaAlumnos.ToListAsync();
         }
 
         //METODO CREAR------------------
@@ -64,7 +64,7 @@ namespace ApiAlumnos2026.Controllers
             //Aca pregunta, Hay errores?
             if (!ModelState.IsValid)
             {
-                return View(nuevaNota);
+                return BadRequest(ModelState);
             }
 
             //si esta bien lo guarda en la base de datos
@@ -72,12 +72,11 @@ namespace ApiAlumnos2026.Controllers
             _context.SaveChanges();
 
 
-            return RedirectToAction("Index");
-
+            return Ok(nuevaNota);
         }
 
         //METODO EDITAR------------------
-        [HttpPut]
+        [HttpPut("{id}")]
         public async Task<IActionResult> Edit(int id, NotaAlumno notaAlumno)
         {
             //compara el id que viene de la URL, con el id del objeto que viene del body
@@ -112,7 +111,7 @@ namespace ApiAlumnos2026.Controllers
         }
 
         //METODO ELIMINAR------------------
-        [HttpDelete]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteNotaAlumno(int id)
         {
             var notaAlumno = await _context.NotaAlumnos.FindAsync(id);
