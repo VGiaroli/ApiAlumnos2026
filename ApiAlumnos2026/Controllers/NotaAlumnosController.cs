@@ -23,6 +23,17 @@ namespace ApiAlumnos2026.Controllers
             return await _context.NotaAlumnos.ToListAsync();
         }
 
+        [HttpGet("{id}")]
+        public async Task<ActionResult<NotaAlumno>> GetNotaAlumnos(int id)
+        {
+            var notaAlumno = await _context.NotaAlumnos.FindAsync(id);
+
+            if (notaAlumno == null)
+                return NotFound();
+
+            return notaAlumno;
+        }
+
         //METODO CREAR------------------
         [HttpPost]
         public IActionResult AgregarNotaAlumno(NotaAlumno nuevaNota) //nuevaNota es un parametro dentro del método(NotaAlumno)
