@@ -54,23 +54,20 @@ namespace ApiAlumnos2026.Controllers
             // usamos bool para verificar si ya existe un alumno con el mismo nombre y DNI.
             // con el Any() devuelve true si al menos un registro cumple la condición especificada.
             // devuelve un true o false, dependiendo si ya hay un alumno y DNI cargado.
-            bool Nombreexiste = _context.NotaAlumnos
-                .Any(n => n.NombreAlumno == nuevaNota.NombreAlumno);
+            bool alumnoExiste = _context.NotaAlumnos
+                .Any(n => n.NombreAlumno == nuevaNota.NombreAlumno
+                && n.NumeroDNI == nuevaNota.NumeroDNI);
 
-            bool Dniexiste = _context.NotaAlumnos
-                 .Any(d => d.NumeroDNI == nuevaNota.NumeroDNI);
+            bool dniExiste = _context.NotaAlumnos
+                .Any(n => n.NumeroDNI == nuevaNota.NumeroDNI);
 
             //VALIDACIONES.
             // Lo que indica ModelState es que si hay algun error, que no agregue nada y muestre otra vez el formulario
-            if (Nombreexiste)
-            {
-                ModelState.AddModelError("NombreAlumno", "Ya existe un alumno con este nombre.");
-            }
+            if (alumnoExiste)
+                ModelState.AddModelError("Duplicado", "Ya existe un alumno con ese nombre y DNI.");
 
-            if (Dniexiste)
-            {
-                ModelState.AddModelError("NumeroDNI", "Ya existe un alumno con este número de DNI.");
-            }
+            if (dniExiste)
+                ModelState.AddModelError("NumeroDNI", "Ya existe un alumno registrado con ese DNI.");
 
             //Aca pregunta, Hay errores?
             if (!ModelState.IsValid)
@@ -95,6 +92,24 @@ namespace ApiAlumnos2026.Controllers
             {
                 return BadRequest();
             }
+
+            bool alumnoExiste = _context.NotaAlumnos
+                .Any(n => n.NombreAlumno == notaAlumno.NombreAlumno
+                && n.NumeroDNI == notaAlumno.NumeroDNI
+                && n.NotaAlumnoId != id);
+
+            bool dniExiste = _context.NotaAlumnos
+                .Any(n => n.NumeroDNI == notaAlumno.NumeroDNI
+                && n.NotaAlumnoId != id);
+
+            if (alumnoExiste)
+                ModelState.AddModelError("Duplicado", "Ya existe un alumno con ese nombre y DNI.");
+
+            if (dniExiste)
+                ModelState.AddModelError("NumeroDNI", "Ya existe un alumno registrado con ese DNI.");
+            
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
             //aca entity framework sabe que el objeto esta en la base de datos, pero tambien sabe que se modifico
             _context.Entry(notaAlumno).State = EntityState.Modified;
