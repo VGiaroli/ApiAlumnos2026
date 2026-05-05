@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ApiAlumnos2026.Migrations
 {
     [DbContext(typeof(ApiAlumnos2026DbContext))]
-    partial class ApiAlumnos2026DbContextModelSnapshot : ModelSnapshot
+    [Migration("20260417175323_ActualizacionModelosYRelaciones")]
+    partial class ActualizacionModelosYRelaciones
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -104,9 +107,6 @@ namespace ApiAlumnos2026.Migrations
 
                     b.Property<int>("AsignaturaId")
                         .HasColumnType("int");
-
-                    b.Property<DateTime>("Fecha")
-                        .HasColumnType("datetime2");
 
                     b.Property<int?>("Nota")
                         .HasColumnType("int");

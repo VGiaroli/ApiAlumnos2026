@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ApiAlumnos2026.Migrations
 {
     [DbContext(typeof(ApiAlumnos2026DbContext))]
-    partial class ApiAlumnos2026DbContextModelSnapshot : ModelSnapshot
+    [Migration("20260414231021_AgregamosModeloDocente")]
+    partial class AgregamosModeloDocente
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -32,16 +35,13 @@ namespace ApiAlumnos2026.Migrations
                     b.Property<int>("DNI")
                         .HasColumnType("int");
 
-                    b.Property<string>("Domicilio")
+                    b.Property<string>("Domiciliio")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NombreCompleto")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Sexo")
-                        .HasColumnType("int");
 
                     b.HasKey("AlumnoId");
 
@@ -99,54 +99,19 @@ namespace ApiAlumnos2026.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("NotaAlumnoId"));
 
-                    b.Property<int>("AlumnoId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("AsignaturaId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Fecha")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("NombreAlumno")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("Nota")
                         .HasColumnType("int");
 
+                    b.Property<int?>("NumeroDNI")
+                        .HasColumnType("int");
+
                     b.HasKey("NotaAlumnoId");
 
-                    b.HasIndex("AlumnoId");
-
-                    b.HasIndex("AsignaturaId");
-
                     b.ToTable("NotaAlumnos");
-                });
-
-            modelBuilder.Entity("ApiAlumnos2026.Models.NotaAlumno", b =>
-                {
-                    b.HasOne("ApiAlumnos2026.Models.Alumno", "Alumno")
-                        .WithMany("Notas")
-                        .HasForeignKey("AlumnoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ApiAlumnos2026.Models.Asignatura", "Asignatura")
-                        .WithMany("Notas")
-                        .HasForeignKey("AsignaturaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Alumno");
-
-                    b.Navigation("Asignatura");
-                });
-
-            modelBuilder.Entity("ApiAlumnos2026.Models.Alumno", b =>
-                {
-                    b.Navigation("Notas");
-                });
-
-            modelBuilder.Entity("ApiAlumnos2026.Models.Asignatura", b =>
-                {
-                    b.Navigation("Notas");
                 });
 #pragma warning restore 612, 618
         }

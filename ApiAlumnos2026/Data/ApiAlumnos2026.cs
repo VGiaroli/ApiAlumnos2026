@@ -15,6 +15,13 @@ public class ApiAlumnos2026DbContext : DbContext
     // DbSet<NotaAlumno> → representa una tabla.
     // NotaAlumnos → nombre de la tabla en el código.
     public DbSet<NotaAlumno> NotaAlumnos { get; set; }
+
+    public DbSet<Asignatura> Asignaturas { get; set; }
+
+    public DbSet<Alumno> Alumnos { get; set; }
+
+    public DbSet<Docente> Docentes { get; set; }
+    
 }
 
 //Tengo una base de datos, y dentro una tabla llamada NotaAlumnos, donde

@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using ApiAlumnos2026.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,67 +21,76 @@ namespace ApiAlumnos2026.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<NotaAlumno>>> GetNotaAlumnos()
         {
-            return await _context.NotaAlumnos.ToListAsync();
+            var notas = await _context.NotaAlumnos
+            .Select(n => new {
+                //propiedades básicas
+                n.NotaAlumnoId,
+                n.Nota,
+                n.AlumnoId,
+                n.AsignaturaId,
+                n.Fecha,
+                //traigo solo los nombres, no el objeto completo
+                //solamente le estoy pidiendo esa información
+                NombreAlumno = n.Alumno!.NombreCompleto,
+                NombreAsignatura = n.Asignatura!.Descripcion
+            })
+            .ToListAsync();
+
+            return Ok(notas);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<NotaAlumno>> GetNotaAlumnos(int id)
         {
-            var notaAlumno = await _context.NotaAlumnos.FindAsync(id);
+            var notaAlumno = await _context.NotaAlumnos
+            .Select(n => new {
+                //propiedades básicas
+                n.NotaAlumnoId,
+                n.Nota,
+                n.AlumnoId,
+                n.AsignaturaId,
+                n.Fecha,
+                //traigo solo los nombres, no el objeto completo
+                //solamente le estoy pidiendo esa información
+                NombreAlumno = n.Alumno!.NombreCompleto,
+                NombreAsignatura = n.Asignatura!.Descripcion
+            })
+            .FirstOrDefaultAsync(n => n.NotaAlumnoId == id); 
+            //no debo traer una lista completa, sino el primero y el correcto
 
             if (notaAlumno == null)
+            {
                 return NotFound();
+            }
 
-            return notaAlumno;
+            return Ok(notaAlumno);
         }
 
         //METODO CREAR------------------
         [HttpPost]
-        public IActionResult AgregarNotaAlumno(NotaAlumno nuevaNota) //nuevaNota es un parametro dentro del método(NotaAlumno)
+        //devuelve uno solo <IActionResult>, si trabaja con mas deberiamos trabajar con IEnumerable
+        public async Task<IActionResult> AgregarNotaAlumno([FromBody ]NotaAlumno nuevaNota) //nuevaNota es un parametro dentro del método(NotaAlumno)
         {
-            if (string.IsNullOrEmpty(nuevaNota.NombreAlumno))
-                return BadRequest("El nombre del alumno no puede quedar vacio");
-
-            //HasValue:
-            //responde a si tiene un valor o está vacio
-            //no debe ser 0 o igual a 0.
-            // "||" significa "OR"
-            if (!nuevaNota.Nota.HasValue || nuevaNota.Nota <= 0)
-                return BadRequest("No puede quedar vacio, debe ingresar una nota");
-
-            if (!nuevaNota.NumeroDNI.HasValue)
-                return BadRequest("No puede quedar vacio, debe ingresar el numero de DNI");
-
-            // usamos bool para verificar si ya existe un alumno con el mismo nombre y DNI.
-            // con el Any() devuelve true si al menos un registro cumple la condición especificada.
-            // devuelve un true o false, dependiendo si ya hay un alumno y DNI cargado.
-            bool alumnoExiste = _context.NotaAlumnos
-                .Any(n => n.NombreAlumno == nuevaNota.NombreAlumno
-                && n.NumeroDNI == nuevaNota.NumeroDNI);
-
-            bool dniExiste = _context.NotaAlumnos
-                .Any(n => n.NumeroDNI == nuevaNota.NumeroDNI);
-
-            //VALIDACIONES.
-            // Lo que indica ModelState es que si hay algun error, que no agregue nada y muestre otra vez el formulario
-            if (alumnoExiste)
-                ModelState.AddModelError("Duplicado", "Ya existe un alumno con ese nombre y DNI.");
-
-            if (dniExiste)
-                ModelState.AddModelError("NumeroDNI", "Ya existe un alumno registrado con ese DNI.");
-
-            //Aca pregunta, Hay errores?
-            if (!ModelState.IsValid)
+            //HACER OTRA VEZ DE CERO EL OBJETO PARA CONTROLAR LOS DATOS QUE QUEREMOS GUARDAR
+            if(nuevaNota == null)
             {
-                return BadRequest(ModelState);
+                return BadRequest();
             }
 
-            //si esta bien lo guarda en la base de datos
-            _context.NotaAlumnos.Add(nuevaNota);
-            _context.SaveChanges();
+            //falta hacer validaciones AsignaturaId y AlumnoId, Nota y Fecha
 
+            var guardarNotaAlumno = new NotaAlumno
+            {
+                Nota = nuevaNota.Nota,
+                AlumnoId = nuevaNota.AlumnoId,
+                AsignaturaId = nuevaNota.AsignaturaId,
+                Fecha = nuevaNota.Fecha
+            };
+            
+            _context.NotaAlumnos.Add(guardarNotaAlumno);
+            await _context.SaveChangesAsync();
 
-            return Ok(nuevaNota);
+            return Ok(guardarNotaAlumno);
         }
 
         //METODO EDITAR------------------
@@ -93,26 +103,27 @@ namespace ApiAlumnos2026.Controllers
                 return BadRequest();
             }
 
-            bool alumnoExiste = _context.NotaAlumnos
-                .Any(n => n.NombreAlumno == notaAlumno.NombreAlumno
-                && n.NumeroDNI == notaAlumno.NumeroDNI
-                && n.NotaAlumnoId != id);
+            if(notaAlumno.Fecha == DateTime.MinValue)
+            {
+                return BadRequest("Debe elegir y/o ingresar una fecha");
+            }
 
-            bool dniExiste = _context.NotaAlumnos
-                .Any(n => n.NumeroDNI == notaAlumno.NumeroDNI
-                && n.NotaAlumnoId != id);
+            //falta hacer validaciones AsignaturaId y AlumnoId
+            var guardarNotaAlumno = new NotaAlumno
+            {   
+                NotaAlumnoId = notaAlumno.NotaAlumnoId,
+                Nota = notaAlumno.Nota,
+                AlumnoId = notaAlumno.AlumnoId,
+                AsignaturaId = notaAlumno.AsignaturaId,
+                Fecha = notaAlumno.Fecha
+            };
 
-            if (alumnoExiste)
-                ModelState.AddModelError("Duplicado", "Ya existe un alumno con ese nombre y DNI.");
-
-            if (dniExiste)
-                ModelState.AddModelError("NumeroDNI", "Ya existe un alumno registrado con ese DNI.");
-            
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            //aca entity framework sabe que el objeto esta en la base de datos, pero tambien sabe que se modifico
-            _context.Entry(notaAlumno).State = EntityState.Modified;
+            //aca entity framework sabe que el objeto esta en la base de datos, 
+            // pero tambien sabe que se modifico
+            _context.Entry(guardarNotaAlumno).State = EntityState.Modified;
 
             try
             {
@@ -166,6 +177,33 @@ namespace ApiAlumnos2026.Controllers
             return NoContent();
         }
 
+        // [HttpGet]
+        // public async Task<ActionResult<IEnumerable<NotaAlumno>>> AsignarDatos()
+        // {
+        //     var obtenerAlumnos = await _context.NotaAlumnos.Include(n => n.Alumno).ToListAsync();
+
+        //     foreach (var obtenerAlumno in obtenerAlumnos)
+        //     {
+        //         var alumnos = _context.Alumnos
+        //             .Where(d => d.DNI == obtenerAlumno.Alumno.DNI).SingleOrDefault();
+
+        //         if(alumnos == null)
+        //         {
+        //             alumnos = new Alumno
+        //             {
+        //                 NombreCompleto = obtenerAlumno.Alumno.NombreCompleto,
+        //                 Domicilio = "",
+        //                 Sexo = Sexo.Otro,
+        //                 DNI = obtenerAlumno.Alumno.DNI
+        //             };
+
+        //             _context.Alumnos.Add(alumnos);
+        //             await _context.SaveChangesAsync();
+        //         }
+        //     }
+
+        //     return obtenerAlumnos;
+        // }
         private bool NotaAlumnoExist(int id)
         {
             return _context.NotaAlumnos.Any(x => x.NotaAlumnoId == id);
