@@ -8,5 +8,7 @@ namespace ApiAlumnos2026.ClasesVistasVarias
         public int? AsignaturaId {get; set;}
 
         public int? AlumnoId {get; set;}
+
+        public string? Orden {get; set;}
     }
 }

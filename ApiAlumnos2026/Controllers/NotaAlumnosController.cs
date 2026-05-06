@@ -204,6 +204,7 @@ namespace ApiAlumnos2026.Controllers
 
         //     return obtenerAlumnos;
         // }
+        
         private bool NotaAlumnoExist(int id)
         {
             return _context.NotaAlumnos.Any(x => x.NotaAlumnoId == id);
