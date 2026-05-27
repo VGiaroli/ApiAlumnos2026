@@ -68,7 +68,7 @@ namespace ApiAlumnos2026.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> EditDocente(int Id, [FromBody] Docente editarDocente)
+        public async Task<IActionResult> EditDocente(int Id, Docente editarDocente)
         {
 
             // validacion para verificar que el DNI no se repita en otro docente
@@ -101,18 +101,84 @@ namespace ApiAlumnos2026.Controllers
                 return BadRequest("El sexo es obligatorio.");
             }
 
-            var docenteEditar = new Docente
-            {
-                DocenteId = editarDocente.DocenteId,
-                NombreCompleto = editarDocente.NombreCompleto,
-                DNI = editarDocente.DNI,
-                Sexo = editarDocente.Sexo
-            };
-
-            _context.Entry(docenteEditar).State = EntityState.Modified;
-
             try
             {
+                var docenteOriginal = await _context.Docentes
+                .FirstOrDefaultAsync(d => d.DocenteId == Id);
+
+                if(docenteOriginal == null)
+                {
+                    return  NotFound("Docente no encontrado");
+                }
+
+                //DOCENTE
+                if (docenteOriginal.DocenteId != editarDocente.DocenteId)
+                {
+
+                    var nuevoDocente = await _context.Docentes
+                        .FirstOrDefaultAsync(n => n.DocenteId == editarDocente.DocenteId);
+
+                    if (nuevoDocente == null)
+                    {
+                        return BadRequest("Docente no encontrado");
+                    }
+
+                    _context.HistorialDocentes.Add(new HistorialDocente
+                    {
+                        DocenteId = Id,
+                        FechaCambio = DateTime.Now,
+                        CampoModificado = "DOCENTE",
+                        ValorAnterior = docenteOriginal.DocenteId.ToString(),
+                        ValorNuevo = editarDocente.DocenteId.ToString()
+                    });
+                }
+
+                //NOMBRE COMPLETO
+                if(docenteOriginal.NombreCompleto != editarDocente.NombreCompleto)
+                {
+                    _context.HistorialDocentes.Add(new HistorialDocente
+                    {
+                        DocenteId = Id,
+                        FechaCambio = DateTime.Now,
+                        CampoModificado = "NOMBRE COMPLETO",
+                        ValorAnterior = docenteOriginal.NombreCompleto.ToString(),
+                        ValorNuevo = editarDocente.NombreCompleto.ToString()
+                    });
+                }
+
+                //NUMERO DE DNI
+                if(docenteOriginal.DNI != editarDocente.DNI)
+                {
+                    _context.HistorialDocentes.Add(new HistorialDocente
+                    {
+                       DocenteId = Id,
+                       FechaCambio = DateTime.Now,
+                       CampoModificado = "DNI",
+                       ValorAnterior = docenteOriginal.DNI.ToString(),
+                       ValorNuevo = editarDocente.DNI.ToString() 
+                    });
+                }
+
+                //SEXO
+                if (docenteOriginal.Sexo != editarDocente.Sexo)
+                {
+                    _context.HistorialDocentes.Add(new HistorialDocente
+                    {
+                        DocenteId = Id,
+                        FechaCambio = DateTime.Now,
+                        CampoModificado = "SEXO",
+                        ValorAnterior = docenteOriginal.Sexo.ToString(),
+                        ValorNuevo = editarDocente.Sexo.ToString()
+                    });
+                }
+
+                
+                docenteOriginal.DocenteId = editarDocente.DocenteId;
+                docenteOriginal.Sexo = editarDocente.Sexo;
+                docenteOriginal.NombreCompleto = editarDocente.NombreCompleto;
+                docenteOriginal.DNI = editarDocente.DNI;
+
+
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)

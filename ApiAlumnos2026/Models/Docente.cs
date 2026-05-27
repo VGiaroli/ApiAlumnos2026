@@ -8,6 +8,8 @@ public class Docente
 
     public int DNI { get; set; }
 
+    public string? Email {get; set;}
+
     public Sexo Sexo {get; set;}   
 
 }

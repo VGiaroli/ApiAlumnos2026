@@ -22,6 +22,11 @@ public class ApiAlumnos2026DbContext : DbContext
 
     public DbSet<Docente> Docentes { get; set; }
     
+    public DbSet<HistorialNotaAlumno> HistorialNotaAlumnos { get; set; }
+
+    public DbSet<HistorialAlumno> HistorialAlumnos {get; set;}
+
+    public DbSet<HistorialDocente> HistorialDocentes {get; set;}
 }
 
 //Tengo una base de datos, y dentro una tabla llamada NotaAlumnos, donde

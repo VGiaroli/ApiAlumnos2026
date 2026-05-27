@@ -70,20 +70,28 @@ namespace ApiAlumnos2026.Controllers
             return alumnosMostrar.ToList();
         }
 
+
         //Desarrollar un informe que muestre por Asignatura el promedio de notas registradas
         //Permitir filtrar fechas desde y hasta, por asignatura y por alumno
-        [HttpPost("promedioRegistro")]
-        public async Task<ActionResult<IEnumerable<VistaPromedioAlumno>>> PostAlumno (FiltroNotaAlumno filtro)
+        [HttpPost("promedioasignaturas")]
+        public async Task<ActionResult<IEnumerable<VistaPromedioAsignatura>>> PostAlumno(FiltroNotaAlumno filtro)
         {
-            List<VistaPromedioAlumno> asignaturasMostrar = new List<VistaPromedioAlumno>();
+            List<VistaPromedioAsignatura> asignaturasMostrar = new List<VistaPromedioAsignatura>();
 
-            var asignaturas = await _context.Alumnos.ToListAsync();
+            var asignaturas = await _context.Asignaturas.ToListAsync();
+
+            if (filtro.AsignaturaId > 0)
+            {
+                asignaturas = asignaturas.Where(a => a.AsignaturaId == filtro.AsignaturaId).ToList();
+            }
+
             foreach (var asignatura in asignaturas)
             {
-                var promediosRegistro = await _context.NotaAlumnos.Where(a => a.AlumnoId == asignatura.AlumnoId).ToListAsync();
-                if (filtro.AsignaturaId > 0)
+                var notasAsignatura = await _context.NotaAlumnos.Where(a => a.AsignaturaId == asignatura.AsignaturaId).ToListAsync();
+
+                if (filtro.AlumnoId > 0)
                 {
-                    promediosRegistro = promediosRegistro.Where(a => a.AsignaturaId == filtro.AsignaturaId).ToList();
+                    notasAsignatura = notasAsignatura.Where(a => a.AlumnoId == filtro.AlumnoId).ToList();
                 }
 
                 DateTime fechaDesde = new DateTime();
@@ -96,32 +104,90 @@ namespace ApiAlumnos2026.Controllers
                 {
                     fechaHasta = fechaHasta.AddHours(23);
                     fechaHasta = fechaHasta.AddMinutes(59);
-                    fechaHasta = fechaHasta.AddMinutes(59);
-                    promediosRegistro = promediosRegistro.Where(t => t.Fecha >= fechaDesde && t.Fecha <= fechaHasta).ToList();
-
+                    fechaHasta = fechaHasta.AddSeconds(59);
+                    notasAsignatura = notasAsignatura.Where(t => t.Fecha >= fechaDesde && t.Fecha <= fechaHasta).ToList();
                 }
 
-                if (promediosRegistro.Count > 0)
+
+                if (notasAsignatura.Count > 0)
                 {
-                    var promedioMostrar = new VistaPromedioAlumno
+                    var alumnoMostrar = new VistaPromedioAsignatura
                     {
-                        NombreCompleto = asignatura.NombreCompleto,
-                        Promedio = decimal.Round(Convert.ToDecimal(promediosRegistro.Sum(n => n.Nota)) / promediosRegistro.Count(), 2)
+                        AsignaturaId = asignatura.AsignaturaId,
+                        Descripcion = asignatura.Descripcion,
+                        Promedio = decimal.Round(Convert.ToDecimal(notasAsignatura.Sum(n => n.Nota)) / notasAsignatura.Count(), 2)
                     };
-                    asignaturasMostrar.Add(promedioMostrar);
+                    asignaturasMostrar.Add(alumnoMostrar);
                 }
-
-
             }
 
-            //VERIFICAR DESPUES CON ESTO
-            // alumnosMostrar = alumnosMostrar.OrderByDescending(n => n.Promedio).ToList();
-            asignaturasMostrar = asignaturasMostrar.OrderBy(a => a.NombreCompleto).ToList();
-            
+            asignaturasMostrar = asignaturasMostrar.OrderBy(a => a.Descripcion).ToList();
 
             return asignaturasMostrar.ToList();
+        }
 
+
+        [HttpGet("HistorialNotas/{id}")]
+        public async Task<IActionResult> HistorialNotas(int id)
+        {
+            var historial = await _context.HistorialNotaAlumnos
+                .Where(h => h.NotaAlumnoID == id)
+                .OrderByDescending(h => h.FechaCambio)
+                .Select(h => new VistaHistorialNotaAlumno
+                {
+                    HistorialNotaAlumnoID = h.HistorialNotaAlumnoID,
+                    NotaAlumnoID = h.NotaAlumnoID,
+                    FechaCambioString = h.FechaCambio.ToString("dd/MM/yyyy HH:mm"),
+                    CampoModificado = h.CampoModificado,
+                    ValorAnterior = h.ValorAnterior,
+                    ValorNuevo = h.ValorNuevo
+                })
+                .ToListAsync();
+
+            return Ok(historial);
+        }
+
+
+        [HttpGet("HistorialAlumnos/{id}")]
+        public async Task<IActionResult> HistorialAlumnos(int id)
+        {
+            var historialAlumno = await _context.HistorialAlumnos
+                .Where(h => h.AlumnoId == id)
+                .OrderByDescending(h => h.FechaCambio)
+                .Select(h => new VistaHistorialAlumno
+                {
+                    HistorialAlumnoId = h.HistorialAlumnoID,
+                    AlumnoId = h.AlumnoId,
+                    FechaCambioString = h.FechaCambio.ToString("dd/MM/yyyy HH:mm"),
+                    CampoModificado = h.CampoModificado,
+                    ValorAnterior = h.ValorAnterior,
+                    ValorNuevo = h.ValorNuevo
+                })
+                .ToListAsync();
+
+            return Ok(historialAlumno);
+        }
+
+        [HttpGet("HistorialDocentes/{id}")]
+        public async Task<IActionResult> HistorialDocentes(int id)
+        {
+            var historialDocente = await _context.HistorialDocentes
+                .Where(d => d.DocenteId == id)
+                .OrderByDescending(d => d.FechaCambio)
+                .Select(d => new VistaHistorialDocente
+                {
+                    HistorialDocenteId = d.HistorialDocenteID,
+                    DocenteId = d.DocenteId,
+                    FechaCambioString = d.FechaCambio.ToString("dd/MM/yyyy HH:mm"),
+                    CampoModificado = d.CampoModificado,
+                    ValorAnterior = d.ValorAnterior,
+                    ValorNuevo = d.ValorNuevo
+                })
+                .ToListAsync();
+
+            return Ok(historialDocente);
         }
 
     }
 }
+

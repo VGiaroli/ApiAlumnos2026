@@ -12,5 +12,7 @@ public class Alumno
 
     public Sexo Sexo { get; set; }
 
+    public string? Email {get; set;}
+
     public ICollection<NotaAlumno>? Notas { get; set; }
 }

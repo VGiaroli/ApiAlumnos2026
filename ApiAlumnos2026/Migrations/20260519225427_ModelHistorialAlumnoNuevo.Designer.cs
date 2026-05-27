@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ApiAlumnos2026.Migrations
 {
     [DbContext(typeof(ApiAlumnos2026DbContext))]
-    partial class ApiAlumnos2026DbContextModelSnapshot : ModelSnapshot
+    [Migration("20260519225427_ModelHistorialAlumnoNuevo")]
+    partial class ModelHistorialAlumnoNuevo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,9 +37,6 @@ namespace ApiAlumnos2026.Migrations
 
                     b.Property<string>("Domicilio")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Email")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NombreCompleto")
@@ -82,9 +82,6 @@ namespace ApiAlumnos2026.Migrations
                     b.Property<int>("DNI")
                         .HasColumnType("int");
 
-                    b.Property<string>("Email")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("NombreCompleto")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -123,34 +120,6 @@ namespace ApiAlumnos2026.Migrations
                     b.HasKey("HistorialAlumnoID");
 
                     b.ToTable("HistorialAlumnos");
-                });
-
-            modelBuilder.Entity("ApiAlumnos2026.Models.HistorialDocente", b =>
-                {
-                    b.Property<int>("HistorialDocenteID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("HistorialDocenteID"));
-
-                    b.Property<string>("CampoModificado")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("DocenteId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("FechaCambio")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ValorAnterior")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ValorNuevo")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("HistorialDocenteID");
-
-                    b.ToTable("HistorialDocentes");
                 });
 
             modelBuilder.Entity("ApiAlumnos2026.Models.HistorialNotaAlumno", b =>

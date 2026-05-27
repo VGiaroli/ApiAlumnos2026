@@ -3,6 +3,7 @@ using ApiAlumnos2026.Models;
 using Microsoft.AspNetCore.Mvc;
 
 using Microsoft.EntityFrameworkCore;
+using NuGet.Common;
 
 namespace ApiAlumnos2026.Controllers
 {
@@ -22,7 +23,8 @@ namespace ApiAlumnos2026.Controllers
         public async Task<ActionResult<IEnumerable<NotaAlumno>>> GetNotaAlumnos()
         {
             var notas = await _context.NotaAlumnos
-            .Select(n => new {
+            .Select(n => new
+            {
                 //propiedades básicas
                 n.NotaAlumnoId,
                 n.Nota,
@@ -43,7 +45,8 @@ namespace ApiAlumnos2026.Controllers
         public async Task<ActionResult<NotaAlumno>> GetNotaAlumnos(int id)
         {
             var notaAlumno = await _context.NotaAlumnos
-            .Select(n => new {
+            .Select(n => new
+            {
                 //propiedades básicas
                 n.NotaAlumnoId,
                 n.Nota,
@@ -55,7 +58,7 @@ namespace ApiAlumnos2026.Controllers
                 NombreAlumno = n.Alumno!.NombreCompleto,
                 NombreAsignatura = n.Asignatura!.Descripcion
             })
-            .FirstOrDefaultAsync(n => n.NotaAlumnoId == id); 
+            .FirstOrDefaultAsync(n => n.NotaAlumnoId == id);
             //no debo traer una lista completa, sino el primero y el correcto
 
             if (notaAlumno == null)
@@ -69,10 +72,10 @@ namespace ApiAlumnos2026.Controllers
         //METODO CREAR------------------
         [HttpPost]
         //devuelve uno solo <IActionResult>, si trabaja con mas deberiamos trabajar con IEnumerable
-        public async Task<IActionResult> AgregarNotaAlumno([FromBody ]NotaAlumno nuevaNota) //nuevaNota es un parametro dentro del método(NotaAlumno)
+        public async Task<IActionResult> AgregarNotaAlumno([FromBody] NotaAlumno nuevaNota) //nuevaNota es un parametro dentro del método(NotaAlumno)
         {
             //HACER OTRA VEZ DE CERO EL OBJETO PARA CONTROLAR LOS DATOS QUE QUEREMOS GUARDAR
-            if(nuevaNota == null)
+            if (nuevaNota == null)
             {
                 return BadRequest();
             }
@@ -86,7 +89,7 @@ namespace ApiAlumnos2026.Controllers
                 AsignaturaId = nuevaNota.AsignaturaId,
                 Fecha = nuevaNota.Fecha
             };
-            
+
             _context.NotaAlumnos.Add(guardarNotaAlumno);
             await _context.SaveChangesAsync();
 
@@ -97,54 +100,116 @@ namespace ApiAlumnos2026.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Edit(int id, NotaAlumno notaAlumno)
         {
-            //compara el id que viene de la URL, con el id del objeto que viene del body
             if (id != notaAlumno.NotaAlumnoId)
             {
-                return BadRequest();
+                return BadRequest("ID inválido");
             }
-
-            if(notaAlumno.Fecha == DateTime.MinValue)
-            {
-                return BadRequest("Debe elegir y/o ingresar una fecha");
-            }
-
-            //falta hacer validaciones AsignaturaId y AlumnoId
-            var guardarNotaAlumno = new NotaAlumno
-            {   
-                NotaAlumnoId = notaAlumno.NotaAlumnoId,
-                Nota = notaAlumno.Nota,
-                AlumnoId = notaAlumno.AlumnoId,
-                AsignaturaId = notaAlumno.AsignaturaId,
-                Fecha = notaAlumno.Fecha
-            };
-
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            //aca entity framework sabe que el objeto esta en la base de datos, 
-            // pero tambien sabe que se modifico
-            _context.Entry(guardarNotaAlumno).State = EntityState.Modified;
 
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                //Si el método NotaAlumnoExist(id) devuelve falso, 
-                //significa que el registro ya no existe, por lo que responde un 404
-                if (!NotaAlumnoExist(id))
-                {
-                    return NotFound();
-                }
-                // Si el registro existe pero hubo otro error de base de datos, usaremos throw
-                else
-                {
-                    throw;
-                }
-            }
+                // BUSCAR REGISTRO ORIGINAL
+                var notaOriginalAlumno = await _context.NotaAlumnos
+                    .Include(n => n.Alumno)
+                    .Include(n => n.Asignatura)
+                    .FirstOrDefaultAsync(n => n.NotaAlumnoId == id);
 
-            return NoContent();
+                if (notaOriginalAlumno == null)
+                {
+                    return NotFound("Nota no encontrada");
+                }
+
+                // ============================
+                // FECHA
+                // ============================
+                if (notaOriginalAlumno.Fecha != notaAlumno.Fecha)
+                {
+                    _context.HistorialNotaAlumnos.Add(new HistorialNotaAlumno
+                    {
+                        NotaAlumnoID = id,
+                        FechaCambio = DateTime.Now,
+                        CampoModificado = "FECHA",
+                        ValorAnterior = notaOriginalAlumno.Fecha.ToString("dd/MM/yyyy"),
+                        ValorNuevo = notaAlumno.Fecha.ToString("dd/MM/yyyy")
+                    });
+                }
+
+                // ============================
+                // ALUMNO
+                // ============================
+                if (notaOriginalAlumno.AlumnoId != notaAlumno.AlumnoId)
+                {
+                    var alumnoNuevo = await _context.Alumnos
+                        .FirstOrDefaultAsync(a => a.AlumnoId == notaAlumno.AlumnoId);
+
+                    if (alumnoNuevo == null)
+                    {
+                        return BadRequest("Alumno no encontrado");
+                    }
+
+                    _context.HistorialNotaAlumnos.Add(new HistorialNotaAlumno
+                    {
+                        NotaAlumnoID = id,
+                        FechaCambio = DateTime.Now,
+                        CampoModificado = "ALUMNO",
+                        ValorAnterior = notaOriginalAlumno.Alumno.NombreCompleto,
+                        ValorNuevo = alumnoNuevo.NombreCompleto
+                    });
+                }
+
+                // ============================
+                // ASIGNATURA
+                // ============================
+                if (notaOriginalAlumno.AsignaturaId != notaAlumno.AsignaturaId)
+                {
+                    var asignaturaNueva = await _context.Asignaturas
+                        .FirstOrDefaultAsync(a => a.AsignaturaId == notaAlumno.AsignaturaId);
+
+                    if (asignaturaNueva == null)
+                    {
+                        return BadRequest("Asignatura no encontrada");
+                    }
+
+                    _context.HistorialNotaAlumnos.Add(new HistorialNotaAlumno
+                    {
+                        NotaAlumnoID = id,
+                        FechaCambio = DateTime.Now,
+                        CampoModificado = "ASIGNATURA",
+                        ValorAnterior = notaOriginalAlumno.Asignatura.Descripcion,
+                        ValorNuevo = asignaturaNueva.Descripcion
+                    });
+                }
+
+                // ============================
+                // NOTA
+                // ============================
+                if (notaOriginalAlumno.Nota != notaAlumno.Nota)
+                {
+                    _context.HistorialNotaAlumnos.Add(new HistorialNotaAlumno
+                    {
+                        NotaAlumnoID = id,
+                        FechaCambio = DateTime.Now,
+                        CampoModificado = "NOTA",
+                        ValorAnterior = notaOriginalAlumno.Nota.ToString(),
+                        ValorNuevo = notaAlumno.Nota.ToString()
+                    });
+                }
+
+                // ============================
+                // ACTUALIZAR REGISTRO
+                // ============================
+                notaOriginalAlumno.Nota = notaAlumno.Nota;
+                notaOriginalAlumno.AlumnoId = notaAlumno.AlumnoId;
+                notaOriginalAlumno.AsignaturaId = notaAlumno.AsignaturaId;
+                notaOriginalAlumno.Fecha = notaAlumno.Fecha;
+
+                await _context.SaveChangesAsync();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         //METODO ELIMINAR------------------
@@ -204,7 +269,7 @@ namespace ApiAlumnos2026.Controllers
 
         //     return obtenerAlumnos;
         // }
-        
+
         private bool NotaAlumnoExist(int id)
         {
             return _context.NotaAlumnos.Any(x => x.NotaAlumnoId == id);
