@@ -12,6 +12,8 @@ public class Docente
 
     public Sexo Sexo {get; set;}   
 
+    public ICollection <AsignaturaDocente>? AsignaturaDocentes { get; set; }
+
 }
 
 public enum Sexo

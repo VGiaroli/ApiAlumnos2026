@@ -9,4 +9,6 @@ public class Asignatura
     public bool Eliminado { get; set; }
 
     public ICollection<NotaAlumno>? Notas { get; set; }
+
+    public ICollection <AsignaturaDocente>? AsignaturaDocentes {get; set;} 
 }

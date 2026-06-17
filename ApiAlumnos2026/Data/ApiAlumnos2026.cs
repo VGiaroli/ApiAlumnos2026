@@ -1,12 +1,14 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using ApiAlumnos2026.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 //El archivo le dice al programa que COMO debe conectarse a la BD y que tablas existen.
 //Esta clase maneja la BD
-public class ApiAlumnos2026DbContext : DbContext
+public class ApiAlumnos2026DbContext : IdentityDbContext<ApplicationUser>
 {
     //Le dice como conectarse a la BD (servidor, nombre, etc).
-    public ApiAlumnos2026DbContext(DbContextOptions<ApiAlumnos2026DbContext> options)
+    public ApiAlumnos2026DbContext(
+        DbContextOptions<ApiAlumnos2026DbContext> options)
         : base(options)
     {
         
@@ -27,6 +29,8 @@ public class ApiAlumnos2026DbContext : DbContext
     public DbSet<HistorialAlumno> HistorialAlumnos {get; set;}
 
     public DbSet<HistorialDocente> HistorialDocentes {get; set;}
+
+    public DbSet<AsignaturaDocente> AsignaturaDocentes {get; set;}
 }
 
 //Tengo una base de datos, y dentro una tabla llamada NotaAlumnos, donde

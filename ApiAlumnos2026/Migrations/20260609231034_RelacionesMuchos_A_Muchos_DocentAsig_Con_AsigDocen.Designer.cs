@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ApiAlumnos2026.Migrations
 {
     [DbContext(typeof(ApiAlumnos2026DbContext))]
-    partial class ApiAlumnos2026DbContextModelSnapshot : ModelSnapshot
+    [Migration("20260609231034_RelacionesMuchos_A_Muchos_DocentAsig_Con_AsigDocen")]
+    partial class RelacionesMuchos_A_Muchos_DocentAsig_Con_AsigDocen
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -86,10 +89,6 @@ namespace ApiAlumnos2026.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("AsignaturaDocenteId");
-
-                    b.HasIndex("AsignaturaId");
-
-                    b.HasIndex("DocenteId");
 
                     b.ToTable("AsignaturaDocentes");
                 });
@@ -301,6 +300,36 @@ namespace ApiAlumnos2026.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("AsignaturaAsignaturaDocente", b =>
+                {
+                    b.Property<int>("AsignaturaDocentesAsignaturaDocenteId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("AsignaturasAsignaturaId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AsignaturaDocentesAsignaturaDocenteId", "AsignaturasAsignaturaId");
+
+                    b.HasIndex("AsignaturasAsignaturaId");
+
+                    b.ToTable("AsignaturaAsignaturaDocente");
+                });
+
+            modelBuilder.Entity("AsignaturaDocenteDocente", b =>
+                {
+                    b.Property<int>("AsignaturaDocentesAsignaturaDocenteId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DocentesDocenteId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AsignaturaDocentesAsignaturaDocenteId", "DocentesDocenteId");
+
+                    b.HasIndex("DocentesDocenteId");
+
+                    b.ToTable("AsignaturaDocenteDocente");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
@@ -434,25 +463,6 @@ namespace ApiAlumnos2026.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("ApiAlumnos2026.Models.AsignaturaDocente", b =>
-                {
-                    b.HasOne("ApiAlumnos2026.Models.Asignatura", "Asignatura")
-                        .WithMany("AsignaturaDocentes")
-                        .HasForeignKey("AsignaturaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ApiAlumnos2026.Models.Docente", "Docente")
-                        .WithMany("AsignaturaDocentes")
-                        .HasForeignKey("DocenteId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Asignatura");
-
-                    b.Navigation("Docente");
-                });
-
             modelBuilder.Entity("ApiAlumnos2026.Models.NotaAlumno", b =>
                 {
                     b.HasOne("ApiAlumnos2026.Models.Alumno", "Alumno")
@@ -470,6 +480,36 @@ namespace ApiAlumnos2026.Migrations
                     b.Navigation("Alumno");
 
                     b.Navigation("Asignatura");
+                });
+
+            modelBuilder.Entity("AsignaturaAsignaturaDocente", b =>
+                {
+                    b.HasOne("ApiAlumnos2026.Models.AsignaturaDocente", null)
+                        .WithMany()
+                        .HasForeignKey("AsignaturaDocentesAsignaturaDocenteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ApiAlumnos2026.Models.Asignatura", null)
+                        .WithMany()
+                        .HasForeignKey("AsignaturasAsignaturaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AsignaturaDocenteDocente", b =>
+                {
+                    b.HasOne("ApiAlumnos2026.Models.AsignaturaDocente", null)
+                        .WithMany()
+                        .HasForeignKey("AsignaturaDocentesAsignaturaDocenteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ApiAlumnos2026.Models.Docente", null)
+                        .WithMany()
+                        .HasForeignKey("DocentesDocenteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -530,14 +570,7 @@ namespace ApiAlumnos2026.Migrations
 
             modelBuilder.Entity("ApiAlumnos2026.Models.Asignatura", b =>
                 {
-                    b.Navigation("AsignaturaDocentes");
-
                     b.Navigation("Notas");
-                });
-
-            modelBuilder.Entity("ApiAlumnos2026.Models.Docente", b =>
-                {
-                    b.Navigation("AsignaturaDocentes");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,17 +1,22 @@
 using ApiAlumnos2026.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace ApiAlumnos2026.Controllers
 {
+    // [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class AlumnosController : ControllerBase
     {
         private readonly ApiAlumnos2026DbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public AlumnosController(ApiAlumnos2026DbContext context)
+        public AlumnosController(ApiAlumnos2026DbContext context, UserManager<ApplicationUser> userManager)
         {
+            _userManager = userManager;
             _context = context;
         }
 
@@ -89,18 +94,34 @@ namespace ApiAlumnos2026.Controllers
                 return BadRequest("El sexo es obligatorio.");
             }
 
+            _context.Alumnos.Add(nuevoAlumno);
 
-            // Si hay errores de validación, ModelState.IsValid será falso
-
-            // Si hay errores de conversión, ModelState.IsValid será falso
-            if (!ModelState.IsValid)
+            var user = new ApplicationUser
             {
-                return BadRequest(ModelState);
+                UserName = nuevoAlumno.Email,
+                Email = nuevoAlumno.Email,
+                NombreCompleto = nuevoAlumno.NombreCompleto
+            };
+
+            //hacemos uso del método registrar usuario
+            var result = await _userManager.CreateAsync(user, "Ezpeleta_2026");
+            if (result.Succeeded)
+            {
+                await _context.SaveChangesAsync();
+
+                return CreatedAtAction("GetObtenerAlumnos", new {id = nuevoAlumno.AlumnoId}, nuevoAlumno);
             }
 
-            _context.Alumnos.Add(nuevoAlumno);
-            await _context.SaveChangesAsync();
-            return Ok(nuevoAlumno);
+            var error = "";
+            foreach(var textoerror in result.Errors)
+            {
+                error += textoerror.Description;
+            }
+            
+            return BadRequest(new
+            {
+                mensaje = error
+            });
         }
 
         [HttpPut("{id}")]
@@ -249,6 +270,12 @@ namespace ApiAlumnos2026.Controllers
             if (deleteAlumno == null)
             {
                 return NotFound();
+            }
+
+            bool notaExiste = await _context.NotaAlumnos.AnyAsync(n => n.AlumnoId == id);
+            if(notaExiste)
+            {
+                return BadRequest("No se puede eliminar el alumno porque ya tiene notas registradas.");
             }
 
             try

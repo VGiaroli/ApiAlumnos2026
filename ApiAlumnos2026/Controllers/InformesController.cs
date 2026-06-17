@@ -44,7 +44,7 @@ namespace ApiAlumnos2026.Controllers
                 {
                     fechaHasta = fechaHasta.AddHours(23);
                     fechaHasta = fechaHasta.AddMinutes(59);
-                    fechaHasta = fechaHasta.AddMinutes(59);
+                    fechaHasta = fechaHasta.AddSeconds(59);
                     notasAlumno = notasAlumno.Where(t => t.Fecha >= fechaDesde && t.Fecha <= fechaHasta).ToList();
 
                 }
