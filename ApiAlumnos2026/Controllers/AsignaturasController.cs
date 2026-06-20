@@ -1,4 +1,7 @@
+using System.Security.Claims;
+using ApiAlumnos2026.ClasesVistasVarias;
 using ApiAlumnos2026.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,20 +18,70 @@ namespace ApiAlumnos2026.Controllers
             _context = context;
         }
 
-        [HttpGet]   
-        public async Task<ActionResult<IEnumerable<Asignatura>>> GetAsignatura()
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<VistaAsignatura>>> GetAsignatura()
         {
-            return await _context.Asignaturas.ToListAsync();
+            List<VistaAsignatura> vistaAsignaturas = new List<VistaAsignatura>();
+
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId != null)
+            {
+                var usuario = _context.Users.Where(d => d.Id == userId).Single();
+
+                //distinto al admin
+                if (usuario.Email != "admin@gmail.com")
+                {
+                    //buscamos el docente relacionado
+                    var docente = _context.Docentes.Where(d => d.Email == usuario.Email).SingleOrDefault();
+
+                    if (docente != null)
+                    {
+                        var asignaturasDocente = _context.AsignaturaDocentes.Where(a => a.DocenteId == docente.DocenteId).ToList();
+
+                        foreach (var asignaturaDocente in asignaturasDocente)
+                        {
+                            var asignatura = _context.Asignaturas.Where(a => a.AsignaturaId == asignaturaDocente.AsignaturaId).Single();
+
+                            var elemento = new VistaAsignatura
+                            {
+                                AsignaturaId = asignatura.AsignaturaId,
+                                Descripcion = asignatura.Descripcion,
+                                Eliminado = asignatura.Eliminado
+                            };
+                            vistaAsignaturas.Add(elemento);
+                        }
+                    }
+                }
+                else
+                {
+                    var asignaturas = await _context.Asignaturas.OrderBy(n => n.Descripcion).ToListAsync();
+
+                    foreach (var asignatura in asignaturas)
+                    {
+                        var elemento = new VistaAsignatura
+                        {
+                            AsignaturaId = asignatura.AsignaturaId,
+                            Descripcion = asignatura.Descripcion,
+                            Eliminado = asignatura.Eliminado
+                        };
+                        vistaAsignaturas.Add(elemento);
+
+                    }
+                }
+            }
+
+            return vistaAsignaturas;
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Asignatura>> GetObtenerAsignatura(int id)
         {
             var obtenerAlumno = await _context.Asignaturas.FindAsync(id);
-            
-            if(obtenerAlumno == null)
+
+            if (obtenerAlumno == null)
             {
-                return NotFound();  
+                return NotFound();
             }
 
             return obtenerAlumno;
@@ -48,7 +101,7 @@ namespace ApiAlumnos2026.Controllers
 
             bool existeAsignatura = await _context.Asignaturas
                 .AnyAsync(e => e.Descripcion.ToLower().Trim() == nuevaAsignatura.Descripcion.ToLower().Trim());
-            if(existeAsignatura)
+            if (existeAsignatura)
             {
                 return BadRequest("Esta asignatura ya se encuentra registrada");
             }
@@ -61,12 +114,12 @@ namespace ApiAlumnos2026.Controllers
                 Descripcion = nuevaAsignatura.Descripcion,
                 Eliminado = false
             };
-            
+
             _context.Asignaturas.Add(guardarAsignatura);
             await _context.SaveChangesAsync();
 
-            return Ok(guardarAsignatura);
-                
+            return CreatedAtAction("GetAsignatura", new { id = nuevaAsignatura.AsignaturaId }, nuevaAsignatura);
+
         }
 
 
@@ -100,14 +153,14 @@ namespace ApiAlumnos2026.Controllers
             };
 
             _context.Entry(asignaturaEditada).State = EntityState.Modified;
-            
+
             try
             {
                 await _context.SaveChangesAsync();
             }
-            catch(DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException)
             {
-                if(!AsignaturaExist(asignaturas.AsignaturaId))
+                if (!AsignaturaExist(asignaturas.AsignaturaId))
                 {
                     return NotFound();
                 }
@@ -116,10 +169,10 @@ namespace ApiAlumnos2026.Controllers
                     throw;
                 }
             }
-            
+
 
             return NoContent();
-                
+
         }
 
 
@@ -128,19 +181,22 @@ namespace ApiAlumnos2026.Controllers
         {
 
             var eliminarAlumno = await _context.Asignaturas.FindAsync(id);
-            if(eliminarAlumno == null)
+            if (eliminarAlumno == null)
             {
-                return NotFound(); 
+                return NotFound();
             }
-            
+
+            eliminarAlumno.Eliminado = true;
+            _context.Entry(eliminarAlumno).State = EntityState.Modified;
+
             try
             {
-                _context.Asignaturas.Remove(eliminarAlumno);
+                // _context.Asignaturas.Remove(eliminarAlumno);
                 await _context.SaveChangesAsync();
             }
-            catch(DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException)
             {
-                if(!AsignaturaExist(id))
+                if (!AsignaturaExist(id))
                 {
                     return NotFound();
                 }
@@ -149,10 +205,10 @@ namespace ApiAlumnos2026.Controllers
                     throw;
                 }
             }
-            
+
 
             return NoContent();
-                
+
         }
 
 

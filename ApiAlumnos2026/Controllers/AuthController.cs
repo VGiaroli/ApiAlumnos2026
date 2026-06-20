@@ -38,12 +38,12 @@ public class AuthController : ControllerBase
         {
             UserName = model.Email,
             Email = model.Email,
-            NombreCompleto = model.NombreCompleto  
+            NombreCompleto = model.NombreCompleto
         };
 
         var result = await _userManager.CreateAsync(user, model.Password);
 
-        if(result.Succeeded)
+        if (result.Succeeded)
         {
             return Ok("Usuario registrado");
         }
@@ -55,13 +55,13 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginModel model)
     {
         var user = await _userManager.FindByEmailAsync(model.Email);
-        if(user != null && await _userManager.CheckPasswordAsync(user, model.Password))
+        if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
         {
             var claims = new[]
             {
               new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, user.UserName),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())  
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
@@ -91,7 +91,7 @@ public class AuthController : ControllerBase
         return Unauthorized("Credenciales inválidas");
     }
 
-     private string GenerarRefreshToken()
+    private string GenerarRefreshToken()
     {
         var randomBytes = new byte[64];
         using var rng = RandomNumberGenerator.Create();
@@ -102,21 +102,19 @@ public class AuthController : ControllerBase
     [HttpPost("refresh-token")]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest model)
     {
-        //BUSCAMOS EL USUARIO POR EMAIL EN BASE DE DATOS
         var user = await _userManager.FindByEmailAsync(model.Email);
         if (user == null)
             return Unauthorized();
 
-        //BUSCAMOS EL TOKENREFRESH GUARDADO
         var savedToken = await _userManager.GetAuthenticationTokenAsync(user, "MyApp", "RefreshToken");
 
-        //COMPARAMOS EL REFRESH TOKEN DE BD CON EL GUARDADO EN EL DISPOSITIVO DEL USUARIO PARA UNA MAYOR SEGURIDAD
         if (savedToken != model.RefreshToken)
             return Unauthorized("Refresh token inválido");
 
-        //GENERAMOS EL NUEVO TOKEN DE ACCESO PRINCIPAL
+        // ✅ Ahora incluye NameIdentifier igual que en Login
         var claims = new[]
         {
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
         new Claim(ClaimTypes.Name, user.UserName),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
     };
@@ -134,9 +132,7 @@ public class AuthController : ControllerBase
 
         var jwt = new JwtSecurityTokenHandler().WriteToken(newToken);
 
-        //GENERAMOS UN NUEVO REFRESH TOCKEN
         var newRefreshToken = GenerarRefreshToken();
-        //VOLVEMOS A GUARDAR ESE REGISTRO
         await _userManager.SetAuthenticationTokenAsync(user, "MyApp", "RefreshToken", newRefreshToken);
 
         return Ok(new

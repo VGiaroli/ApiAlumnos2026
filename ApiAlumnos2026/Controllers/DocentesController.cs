@@ -87,14 +87,7 @@ namespace ApiAlumnos2026.Controllers
             {
                 mensaje = error
             });
-            // if (!ModelState.IsValid)
-            // {
-            //     return BadRequest(ModelState);
-            // }
 
-            // _context.Docentes.Add(nuevoDocente);
-            // await _context.SaveChangesAsync();
-            // return Ok(nuevoDocente);
         }
 
         [HttpPut("{id}")]

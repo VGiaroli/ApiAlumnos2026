@@ -7,6 +7,7 @@ using NuGet.Common;
 
 namespace ApiAlumnos2026.Controllers
 {
+    
     //TENER EN CUENTA PARA DESPUÉS PODER INICIAR EN SWAGGER
     [Route("api/[controller]")]
     [ApiController]
