@@ -191,7 +191,7 @@ namespace ApiAlumnos2026.Controllers
 
             try
             {
-                // _context.Asignaturas.Remove(eliminarAlumno);
+                 _context.Asignaturas.Remove(eliminarAlumno);
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
