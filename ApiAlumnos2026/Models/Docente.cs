@@ -10,6 +10,8 @@ public class Docente
 
     public string? Email {get; set;}
 
+    public bool Eliminado { get; set; }
+
     public Sexo Sexo {get; set;}   
 
     public ICollection <AsignaturaDocente>? AsignaturaDocentes { get; set; }

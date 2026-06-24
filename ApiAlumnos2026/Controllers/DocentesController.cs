@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using ApiAlumnos2026.ClasesVistasVarias;
 using ApiAlumnos2026.Models;
 using Microsoft.AspNetCore.Identity;
@@ -20,9 +21,62 @@ namespace ApiAlumnos2026.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Docente>>> GetDocentes()
+        public async Task<ActionResult<IEnumerable<Docente>>> GetDocente()
         {
-            return await _context.Docentes.ToListAsync();
+            List<Docente> vistaDocentes = new List<Docente>();
+
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId != null)
+            {
+                var usuario = _context.Users.Where(d => d.Id == userId).Single();
+
+                //distinto al admin
+                if (usuario.Email != "admin@gmail.com")
+                {
+                    //buscamos el docente relacionado
+                    var docente = _context.Docentes.Where(d => d.Email == usuario.Email).SingleOrDefault();
+
+                    if (docente != null)
+                    {
+                        var asignaturasDocente = _context.Docentes.Where(a => a.DocenteId == docente.DocenteId).ToList();
+
+                        foreach (var asignaturaDocente in asignaturasDocente)
+                        {
+                            var asignatura = _context.Docentes.Where(a => a.DocenteId == asignaturaDocente.DocenteId).Single();
+
+                            var elemento = new Docente
+                            {
+                                DocenteId = asignatura.DocenteId,
+                                NombreCompleto = asignatura.NombreCompleto,
+                                Sexo = asignatura.Sexo,
+                                Email = asignatura.Email,
+                                DNI = asignatura.DNI
+                            };
+                            vistaDocentes.Add(elemento);
+                        }
+                    }
+                }
+                else
+                {
+                    var asignaturas = await _context.Docentes.OrderBy(n => n.NombreCompleto).ToListAsync();
+
+                    foreach (var asignatura in asignaturas)
+                    {
+                        var elemento = new Docente
+                        {
+                            DocenteId = asignatura.DocenteId,
+                            NombreCompleto = asignatura.NombreCompleto,
+                            Sexo = asignatura.Sexo,
+                            Email = asignatura.Email,
+                            DNI = asignatura.DNI
+                        };
+                        vistaDocentes.Add(elemento);
+
+                    }
+                }
+            }
+
+            return vistaDocentes;
         }
 
         [HttpGet("{Id}")]

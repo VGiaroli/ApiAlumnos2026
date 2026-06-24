@@ -10,6 +10,8 @@ public class Alumno
 
     public string Domicilio { get; set; }
 
+    public bool Eliminado { get; set; }
+
     public Sexo Sexo { get; set; }
 
     public string? Email {get; set;}
