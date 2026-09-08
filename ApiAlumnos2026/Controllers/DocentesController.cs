@@ -38,11 +38,15 @@ namespace ApiAlumnos2026.Controllers
 
                     if (docente != null)
                     {
-                        var asignaturasDocente = _context.Docentes.Where(a => a.DocenteId == docente.DocenteId).ToList();
+                        var asignaturasDocente = _context.Docentes
+                        .Where(a => a.DocenteId == docente.DocenteId)
+                        .ToList();
 
                         foreach (var asignaturaDocente in asignaturasDocente)
                         {
-                            var asignatura = _context.Docentes.Where(a => a.DocenteId == asignaturaDocente.DocenteId).Single();
+                            var asignatura = _context.Docentes
+                            .Where(a => a.DocenteId == asignaturaDocente.DocenteId)
+                            .Single();
 
                             var elemento = new Docente
                             {
@@ -58,7 +62,10 @@ namespace ApiAlumnos2026.Controllers
                 }
                 else
                 {
-                    var asignaturas = await _context.Docentes.OrderBy(n => n.NombreCompleto).ToListAsync();
+                    var asignaturas = await _context.Docentes
+                    .Where(n => !n.Eliminado)
+                    .OrderBy(n => n.NombreCompleto)
+                    .ToListAsync();
 
                     foreach (var asignatura in asignaturas)
                     {
@@ -276,15 +283,36 @@ namespace ApiAlumnos2026.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteDocente(int id)
         {
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                return Unauthorized("No se pudo identificar al usuario actual.");
+            }
+
+            var usuarioLogueado = await _context.Users.FindAsync(userId);
+            if (usuarioLogueado == null)
+            {
+                return NotFound("Usuario logueado no encontrado.");
+            }
+
             var eliminarDocente = await _context.Docentes.FindAsync(id);
             if (eliminarDocente == null)
             {
-                return NotFound();
+                return NotFound("Docente no encontrado.");
+            }
+
+            //en esta línea, el admin puede eliminar el docente, porque es otra cuenta y 
+            // no la del docente que se quiere eliminar a él mismo con su cuenta propia
+            if (usuarioLogueado.Email != "admin@gmail.com" && eliminarDocente.Email == usuarioLogueado.Email)
+            {
+                return BadRequest("No puedes eliminar tu propio usuario docente. Debe hacerlo otra cuenta.");
             }
 
             try
             {
-                _context.Docentes.Remove(eliminarDocente);
+                eliminarDocente.Eliminado = true;
+
+                _context.Docentes.Update(eliminarDocente);
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)

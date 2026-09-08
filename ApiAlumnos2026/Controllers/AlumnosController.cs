@@ -30,10 +30,12 @@ namespace ApiAlumnos2026.Controllers
                     n.Domicilio,
                     n.NombreCompleto,
                     n.Notas,
+                    n.Eliminado,
                     n.DNI,
                     n.Email,
                     n.Sexo
                 })
+                .Where(n => !n.Eliminado)
                 .ToListAsync();
 
             return Ok(alumnosMostrar);
@@ -280,7 +282,7 @@ namespace ApiAlumnos2026.Controllers
 
             try
             {
-                _context.Alumnos.Remove(deleteAlumno);
+                deleteAlumno.Eliminado = true;
                 await _context.SaveChangesAsync();
 
             }

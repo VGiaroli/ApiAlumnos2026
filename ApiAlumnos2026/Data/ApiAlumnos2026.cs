@@ -23,6 +23,8 @@ public class ApiAlumnos2026DbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Alumno> Alumnos { get; set; }
 
     public DbSet<Docente> Docentes { get; set; }
+
+    public DbSet<Carrera> Carreras {get; set;}
     
     public DbSet<HistorialNotaAlumno> HistorialNotaAlumnos { get; set; }
 

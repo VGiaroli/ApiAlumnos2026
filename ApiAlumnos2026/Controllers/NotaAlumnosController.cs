@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using System.Threading.Tasks;
+using ApiAlumnos2026.ClasesVistasVarias;
 using ApiAlumnos2026.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,7 +9,7 @@ using NuGet.Common;
 
 namespace ApiAlumnos2026.Controllers
 {
-    
+
     //TENER EN CUENTA PARA DESPUÉS PODER INICIAR EN SWAGGER
     [Route("api/[controller]")]
     [ApiController]
@@ -21,26 +23,102 @@ namespace ApiAlumnos2026.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<NotaAlumno>>> GetNotaAlumnos()
+        public async Task<ActionResult<IEnumerable<VistaNotaAlumno>>> GetNotaAlumno()
         {
-            var notas = await _context.NotaAlumnos
-            .Select(n => new
-            {
-                //propiedades básicas
-                n.NotaAlumnoId,
-                n.Nota,
-                n.AlumnoId,
-                n.AsignaturaId,
-                n.Fecha,
-                //traigo solo los nombres, no el objeto completo
-                //solamente le estoy pidiendo esa información
-                NombreAlumno = n.Alumno!.NombreCompleto,
-                NombreAsignatura = n.Asignatura!.Descripcion
-            })
-            .ToListAsync();
+            List<VistaNotaAlumno> vistaNotaAlumnos = new List<VistaNotaAlumno>();
 
-            return Ok(notas);
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId != null)
+            {
+                var usuario = _context.Users.Where(d => d.Id == userId).Single();
+
+                //distinto al admin
+                if (usuario.Email != "admin@gmail.com")
+                {
+                    //busco al docente relacionado
+                    var docente = _context.Docentes.Where(d => d.Email == usuario.Email).SingleOrDefault();
+
+                    if (docente != null)
+                    {
+                        //traemos los id de las asignaturas que estan relacionadas con el docente
+                        var asignaturasID = _context.AsignaturaDocentes
+                            .Where(a => a.DocenteId == docente.DocenteId)
+                            .Select(a => a.AsignaturaId)
+                            .ToList();
+
+                        //traemos todas las notas de las asignaturas
+                        var notasDocente = await _context.NotaAlumnos
+                            .Include(n => n.Alumno)
+                            .Include(n => n.Asignatura)
+                            .Where(n => asignaturasID.Contains(n.AsignaturaId))
+                            .OrderBy(n => n.Nota)
+                            .ToListAsync();
+
+                        foreach (var notaAlumno in notasDocente)
+                        {
+                            var elemento = new VistaNotaAlumno
+                            {
+                                NotaAlumnoId = notaAlumno.NotaAlumnoId,
+                                Nota = notaAlumno.Nota,
+                                AlumnoId = notaAlumno.AlumnoId,
+                                AsignaturaId = notaAlumno.AsignaturaId,
+                                FechaString = notaAlumno.Fecha.ToString("dd/MM/yyyy"),
+                                NombreCompleto = notaAlumno.Alumno?.NombreCompleto ?? "Sin datos",
+                        AsignaturaNombre = notaAlumno.Asignatura?.Descripcion ?? "Sin datos"
+                            };
+                            vistaNotaAlumnos.Add(elemento);
+                        }
+                    }
+                }
+                else
+                {
+                    var notasAlumno = await _context.NotaAlumnos
+                        .Include(n => n.Alumno)
+                        .Include(n => n.Asignatura)
+                        .OrderBy(n => n.Nota)
+                        .ToListAsync();
+
+                    foreach (var notaAlumno in notasAlumno)
+                    {
+                        var elemento = new VistaNotaAlumno
+                        {
+                            NotaAlumnoId = notaAlumno.NotaAlumnoId,
+                            Nota = notaAlumno.Nota,
+                            AlumnoId = notaAlumno.AlumnoId,
+                            AsignaturaId = notaAlumno.AsignaturaId,
+                            FechaString = notaAlumno.Fecha.ToString("dd/MM/yyyy"),
+                            NombreCompleto = notaAlumno.Alumno?.NombreCompleto ?? "Sin datos",
+                            AsignaturaNombre = notaAlumno.Asignatura?.Descripcion ?? "Sin datos"
+                        };
+                        vistaNotaAlumnos.Add(elemento);
+                    }
+                }
+            }
+
+            return vistaNotaAlumnos;
         }
+
+        // [HttpGet]
+        // public async Task<ActionResult<IEnumerable<NotaAlumno>>> GetNotaAlumnos()
+        // {
+        //     var notas = await _context.NotaAlumnos
+        //     .Select(n => new
+        //     {
+        //         //propiedades básicas
+        //         n.NotaAlumnoId,
+        //         n.Nota,
+        //         n.AlumnoId,
+        //         n.AsignaturaId,
+        //         n.Fecha,
+        //         //traigo solo los nombres, no el objeto completo
+        //         //solamente le estoy pidiendo esa información
+        //         NombreAlumno = n.Alumno!.NombreCompleto,
+        //         NombreAsignatura = n.Asignatura!.Descripcion
+        //     })
+        //     .ToListAsync();
+
+        //     return Ok(notas);
+        // }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<NotaAlumno>> GetNotaAlumnos(int id)
