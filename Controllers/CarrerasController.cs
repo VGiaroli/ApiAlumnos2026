@@ -22,9 +22,7 @@ namespace ApiAlumnos2026.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Carrera>>> GetCarrera()
         {
-            return await _context.Carreras
-            .OrderBy(n => n.Nombre)
-            .ToListAsync(); 
+            return await _context.Carreras.ToListAsync(); 
         }
 
         [HttpGet("{id}")]

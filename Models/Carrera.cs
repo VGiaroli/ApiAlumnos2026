@@ -9,7 +9,5 @@ namespace ApiAlumnos2026.Models
         public int Duracion {get; set;}
 
         public bool Eliminado {get; set;}
-
-        public ICollection<Asignatura> Asignaturas { get; set; } = new List<Asignatura>();
     }
 }

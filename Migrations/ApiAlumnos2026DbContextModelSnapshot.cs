@@ -62,12 +62,6 @@ namespace ApiAlumnos2026.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AsignaturaId"));
 
-                    b.Property<int>("Anio")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CarreraID")
-                        .HasColumnType("int");
-
                     b.Property<string>("Descripcion")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -76,8 +70,6 @@ namespace ApiAlumnos2026.Migrations
                         .HasColumnType("bit");
 
                     b.HasKey("AsignaturaId");
-
-                    b.HasIndex("CarreraID");
 
                     b.ToTable("Asignaturas");
                 });
@@ -471,17 +463,6 @@ namespace ApiAlumnos2026.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("ApiAlumnos2026.Models.Asignatura", b =>
-                {
-                    b.HasOne("ApiAlumnos2026.Models.Carrera", "Carrera")
-                        .WithMany("Asignaturas")
-                        .HasForeignKey("CarreraID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Carrera");
-                });
-
             modelBuilder.Entity("ApiAlumnos2026.Models.AsignaturaDocente", b =>
                 {
                     b.HasOne("ApiAlumnos2026.Models.Asignatura", "Asignatura")
@@ -581,11 +562,6 @@ namespace ApiAlumnos2026.Migrations
                     b.Navigation("AsignaturaDocentes");
 
                     b.Navigation("Notas");
-                });
-
-            modelBuilder.Entity("ApiAlumnos2026.Models.Carrera", b =>
-                {
-                    b.Navigation("Asignaturas");
                 });
 
             modelBuilder.Entity("ApiAlumnos2026.Models.Docente", b =>

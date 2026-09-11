@@ -1,4 +1,3 @@
-using System.IO.Compression;
 using System.Security.Claims;
 using ApiAlumnos2026.ClasesVistasVarias;
 using ApiAlumnos2026.Models;
@@ -42,8 +41,7 @@ namespace ApiAlumnos2026.Controllers
 
                         foreach (var asignaturaDocente in asignaturasDocente)
                         {
-                            var asignatura = _context.Asignaturas
-                            .Where(a => a.AsignaturaId == asignaturaDocente.AsignaturaId).Single();
+                            var asignatura = _context.Asignaturas.Where(a => a.AsignaturaId == asignaturaDocente.AsignaturaId).Single();
 
                             var elemento = new VistaAsignatura
                             {
@@ -57,12 +55,7 @@ namespace ApiAlumnos2026.Controllers
                 }
                 else
                 {
-                    var asignaturas = await _context.Asignaturas
-                    .Include(c => c.Carrera)
-                    .OrderBy(c => c.Carrera.Nombre)
-                    .ThenBy(a => a.Anio)
-                    .ThenBy(n => n.Descripcion)
-                    .ToListAsync();
+                    var asignaturas = await _context.Asignaturas.OrderBy(n => n.Descripcion).ToListAsync();
 
                     foreach (var asignatura in asignaturas)
                     {
@@ -70,9 +63,6 @@ namespace ApiAlumnos2026.Controllers
                         {
                             AsignaturaId = asignatura.AsignaturaId,
                             Descripcion = asignatura.Descripcion,
-                            CarreraID = asignatura.CarreraID,
-                            Anio = asignatura.Anio,
-                            Nombre = asignatura.Carrera.Nombre,
                             Eliminado = asignatura.Eliminado
                         };
                         vistaAsignaturas.Add(elemento);
@@ -122,8 +112,6 @@ namespace ApiAlumnos2026.Controllers
             var guardarAsignatura = new Asignatura
             {
                 Descripcion = nuevaAsignatura.Descripcion,
-                CarreraID = nuevaAsignatura.CarreraID,
-                Anio = nuevaAsignatura.Anio,
                 Eliminado = false
             };
 
@@ -161,8 +149,6 @@ namespace ApiAlumnos2026.Controllers
             {
                 AsignaturaId = asignaturas.AsignaturaId,
                 Descripcion = asignaturas.Descripcion,
-                CarreraID = asignaturas.CarreraID,
-                Anio = asignaturas.Anio,
                 Eliminado = asignaturas.Eliminado
             };
 
@@ -194,18 +180,18 @@ namespace ApiAlumnos2026.Controllers
         public async Task<IActionResult> DeleteAsignatura(int id)
         {
 
-            var eliminarAsignatura = await _context.Asignaturas.FindAsync(id);
-            if (eliminarAsignatura == null)
+            var eliminarAlumno = await _context.Asignaturas.FindAsync(id);
+            if (eliminarAlumno == null)
             {
                 return NotFound();
             }
 
-            eliminarAsignatura.Eliminado = true;
-            _context.Entry(eliminarAsignatura).State = EntityState.Modified;
+            eliminarAlumno.Eliminado = true;
+            _context.Entry(eliminarAlumno).State = EntityState.Modified;
 
             try
             {
-                _context.Asignaturas.Remove(eliminarAsignatura);
+                 _context.Asignaturas.Remove(eliminarAlumno);
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)

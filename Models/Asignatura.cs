@@ -8,12 +8,6 @@ public class Asignatura
 
     public bool Eliminado { get; set; }
 
-    public int CarreraID {get; set;}
-
-    public Carrera Carrera {get; set;}
-
-    public int Anio { get; set; }
-
     public ICollection<NotaAlumno>? Notas { get; set; }
 
     public ICollection <AsignaturaDocente>? AsignaturaDocentes {get; set;} 
